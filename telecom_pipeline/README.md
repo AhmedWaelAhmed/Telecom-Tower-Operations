@@ -1,4 +1,4 @@
-Here is the polished, fully updated `README.md` file. I have added your name and title as the author, updated the directory tree to include the new `make_sample.py` script, and added a highly professional warning block explaining exactly how an instructor or recruiter can test your code using the sample data.
+
 
 ### Step 1: Update the File
 
