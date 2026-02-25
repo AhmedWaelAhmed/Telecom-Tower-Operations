@@ -1,1 +1,4 @@
 /data
+venv/
+telecom_pipeline/data/
+*.csv
