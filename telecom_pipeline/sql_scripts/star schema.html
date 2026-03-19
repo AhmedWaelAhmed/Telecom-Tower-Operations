@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Pulse - Star Schema</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-fact: #06b6d4; /* Cyan */
+            --border-dim: #10b981;  /* Emerald */
+            --pk-color: #fbbf24;   /* Yellow */
+            --fk-color: #c084fc;   /* Purple */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 50px; /* مساحة آمنة حول التصميم بأكمله */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: auto; /* السماح بالتمرير للشاشات الصغيرة */
+        }
+
+        /* SVG Container for Lines */
+        #svg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .schema-container {
+            position: relative;
+            /* زيادة حجم الحاوية لإبعاد الجداول عن بعضها */
+            width: 1300px; 
+            height: 950px; 
+            z-index: 2;
+        }
+
+        /* Table Card Base Style */
+        .table-card {
+            position: absolute;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            width: 240px;
+            font-size: 13px;
+            border: 1px solid #334155;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .table-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .fact-table {
+            border: 2px solid var(--border-fact);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+            width: 280px;
+            /* Center the Fact Table */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .fact-table:hover {
+            transform: translate(-50%, calc(-50% - 5px));
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.6);
+        }
+
+        .dim-table {
+            border: 2px solid var(--border-dim);
+        }
+
+        .dim-table:hover {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Positions for Dimensions - تم دفعهم للأطراف تماماً */
+        #dim-network { top: 0; left: 50%; transform: translateX(-50%); }
+        #dim-date { bottom: 0; left: 50%; transform: translateX(-50%); }
+        #dim-tower { top: 50%; left: 0; transform: translateY(-50%); }
+        #dim-maintenance { top: 50%; right: 0; transform: translateY(-50%); }
+
+        /* Card Header & Content */
+        .card-header {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #334155;
+            border-radius: 8px 8px 0 0;
+            letter-spacing: 1px;
+        }
+
+        .fact-header { color: var(--border-fact); }
+        .dim-header { color: var(--border-dim); }
+
+        .card-body { padding: 10px; }
+        
+        /* السكرول الخاص بجدول الفاكت */
+        .fact-table .card-body {
+            max-height: 400px; /* إعطاء الفاكت طول مناسب */
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .fact-table .card-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .fact-table .card-body::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        .fact-table .card-body::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+        }
+        .fact-table .card-body::-webkit-scrollbar-thumb:hover {
+            background: var(--border-fact);
+        }
+
+        .col-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .col-list li {
+            padding: 4px 0;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .col-list li:last-child { border-bottom: none; }
+
+        .pk { color: var(--pk-color); font-weight: bold; font-size: 11px;}
+        .fk { color: var(--fk-color); font-weight: bold; font-size: 11px;}
+        .measure { color: var(--text-muted); font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <svg id="svg-canvas"></svg>
+
+    <div class="schema-container">
+        
+        <div class="table-card dim-table" id="dim-network">
+            <div class="card-header dim-header">Dim_Network</div>
+            <div class="card-body">
+                <ul class="col-list">
+                    <li>network_id <span class="pk">PK</span></li>
+                    <li>radio</li>
+                    <li>mcc</li>
+                    <li>mnc</li>
+                    <li>network_name</li>
+                    <li>country</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="table-card dim-table" id="dim-tower">
+            <div class="card-header dim-header">Dim_Tower</div>
+            <div class="card-body">
+                <ul class="col-list">
+                    <li>tower_id <span class="pk">PK</span></li>
+                    <li>cid</li>
+                    <li>tac</li>
+                    <li>lon & lat</li>
+                    <li>range</li>
+                    <li>coverage_gap</li>
+                    <li>tower_stat</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="table-card fact-table" id="fact-table">
+            <div class="card-header fact-header">Fact_Cell_Performance</div>
+            <div class="card-body">
+                <ul class="col-list">
+                    <li>fact_id <span class="pk">PK</span></li>
+                    <li>tower_id <span class="fk">FK</span></li>
+                    <li>network_id <span class="fk">FK</span></li>
+                    <li>maintenance_id <span class="fk">FK</span></li>
+                    <li>date_id <span class="fk">FK</span></li>
+                    <li>created_ts</li>
+                    <li class="measure">total_calls</li>
+                    <li class="measure">drop_calls</li>
+                    <li class="measure">drop_rate</li>
+                    <li class="measure">avg_load</li>
+                    <li class="measure">signal_strength</li>
+                    <li class="measure">speed</li>
+                    <li class="measure">latency</li>
+                    <li class="measure">QoE</li>
+                    <li class="measure">labor_cost</li>
+                    <li class="measure">parts_cost</li>
+                    <li class="measure">downtime_hours</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="table-card dim-table" id="dim-maintenance">
+            <div class="card-header dim-header">Dim_Maintenance</div>
+            <div class="card-body">
+                <ul class="col-list">
+                    <li>maintenance_id <span class="pk">PK</span></li>
+                    <li>vendor</li>
+                    <li>maintenance_type</li>
+                    <li>priority</li>
+                    <li>signal_qua</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="table-card dim-table" id="dim-date">
+            <div class="card-header dim-header">Dim_Date</div>
+            <div class="card-body">
+                <ul class="col-list">
+                    <li>date_id <span class="pk">PK</span></li>
+                    <li>full_date</li>
+                    <li>year</li>
+                    <li>month</li>
+                    <li>day</li>
+                    <li>is_weekend</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function drawLines() {
+            const svg = document.getElementById('svg-canvas');
+            svg.innerHTML = ''; 
+
+            const fact = document.getElementById('fact-table');
+            const dims = ['dim-network', 'dim-tower', 'dim-maintenance', 'dim-date'];
+
+            function getCenter(el) {
+                const rect = el.getBoundingClientRect();
+                return {
+                    x: rect.left + rect.width / 2 + window.scrollX,
+                    y: rect.top + rect.height / 2 + window.scrollY
+                };
+            }
+
+            const factCenter = getCenter(fact);
+
+            dims.forEach(dimId => {
+                const dim = document.getElementById(dimId);
+                const dimCenter = getCenter(dim);
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', factCenter.x);
+                line.setAttribute('y1', factCenter.y);
+                line.setAttribute('x2', dimCenter.x);
+                line.setAttribute('y2', dimCenter.y);
+                line.setAttribute('stroke', 'rgba(148, 163, 184, 0.4)'); 
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-dasharray', '5,5'); 
+
+                svg.appendChild(line);
+            });
+        }
+
+        window.addEventListener('load', drawLines);
+        window.addEventListener('resize', drawLines);
+        document.querySelector('.fact-table .card-body').addEventListener('scroll', drawLines);
+    </script>
+
+</body>
+</html>

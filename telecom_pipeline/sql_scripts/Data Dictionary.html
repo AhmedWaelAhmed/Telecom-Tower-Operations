@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Pulse - Data Dictionary</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --acc-cyan: #06b6d4;
+            --acc-emerald: #10b981;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: var(--acc-cyan);
+            letter-spacing: 1px;
+        }
+
+        /* --- Main Content --- */
+        main {
+            flex: 1;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* --- Data Dictionary Controls & Table --- */
+        #dictionary-controls {
+            margin-bottom: 20px;
+            display: flex;
+        }
+
+        #dictionary-search {
+            flex: 1;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        #dictionary-search:focus {
+            outline: none;
+            border-color: var(--acc-cyan);
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+        }
+
+        #dictionary-table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            min-width: 800px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .target-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            display: inline-block;
+        }
+
+        .target-tag.fact { 
+            background-color: rgba(6, 182, 212, 0.1); 
+            color: var(--acc-cyan); 
+            border: 1px solid rgba(6, 182, 212, 0.3); 
+        }
+        
+        .target-tag.dim { 
+            background-color: rgba(16, 185, 129, 0.1); 
+            color: var(--acc-emerald); 
+            border: 1px solid rgba(16, 185, 129, 0.3); 
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Tower Pulse - Data Dictionary</h1>
+    </header>
+
+    <main>
+        <div id="dictionary-controls">
+            <input type="text" id="dictionary-search" placeholder="Search columns, descriptions, or tables..." onkeyup="searchTable()">
+        </div>
+        <div id="dictionary-table-container">
+            <table id="dictionary-table">
+                <thead>
+                    <tr>
+                        <th>Raw Column</th>
+                        <th>Description</th>
+                        <th>Target Table</th>
+                        <th>Data Type (Ex)</th>
+                    </tr>
+                </thead>
+                <tbody id="dictionary-body">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // --- Data Dictionary Logic ---
+        const dictionaryData = [
+            // Network
+            { raw: "radio", desc: "Network generation technology (e.g., GSM, UMTS, LTE)", target: "Dim_Network", type: "VARCHAR" },
+            { raw: "mcc", desc: "Mobile Country Code (e.g., 602 for Egypt)", target: "Dim_Network", type: "INT" },
+            { raw: "mnc", desc: "Mobile Network Code (e.g., 03 for Etisalat Misr)", target: "Dim_Network", type: "INT" },
+            { raw: "Network", desc: "Mobile Operator Name (e.g., Etisalat)", target: "Dim_Network", type: "VARCHAR" },
+            { raw: "Country", desc: "Country Name (e.g., Egypt)", target: "Dim_Network", type: "VARCHAR" },
+            { raw: "tac", desc: "Tracking Area Code", target: "Dim_Tower", type: "INT" },
+            { raw: "cid", desc: "Cell ID / Sector Identifier", target: "Dim_Tower", type: "INT" },
+            
+            // Geo
+            { raw: "LON", desc: "Longitude coordinate of the tower", target: "Dim_Tower", type: "DECIMAL" },
+            { raw: "LAT", desc: "Latitude coordinate of the tower", target: "Dim_Tower", type: "DECIMAL" },
+            { raw: "RANGE", desc: "Tower coverage radius (meters)", target: "Dim_Tower", type: "INT" },
+            { raw: "coverage_gap", desc: "Boolean: Has coverage gap", target: "Dim_Tower", type: "BOOLEAN" },
+            { raw: "tower_stat", desc: "General status (e.g., Healthy)", target: "Dim_Tower", type: "VARCHAR" },
+
+            // Maintenance
+            { raw: "vendor", desc: "Equipment manufacturer (e.g., Huawei, Ericsson)", target: "Dim_Maintenance", type: "VARCHAR" },
+            { raw: "maintenance_type", desc: "Type of maintenance (e.g., Preventive, Emergency)", target: "Dim_Maintenance", type: "VARCHAR" },
+            { raw: "priority", desc: "Maintenance urgency level (e.g., P3)", target: "Dim_Maintenance", type: "VARCHAR" },
+            { raw: "signal_qua", desc: "Signal quality rating (e.g., Good, Poor)", target: "Dim_Maintenance", type: "VARCHAR" },
+
+            // Time
+            { raw: "created", desc: "Record creation time (Unix Timestamp)", target: "Fact_Cell_Performance", type: "BIGINT" },
+            { raw: "updated", desc: "Record updated time (Unix Timestamp)", target: "Fact_Cell_Performance", type: "BIGINT" },
+            { raw: "created_dt", desc: "Record creation date/time (Formatted)", target: "Dim_Date", type: "DATETIME" },
+            { raw: "updated_dt", desc: "Record updated date/time (Formatted)", target: "Dim_Date", type: "DATETIME" },
+
+            // Metrics (Fact)
+            { raw: "total_calls", desc: "Total number of calls handled", target: "Fact_Cell_Performance", type: "INT" },
+            { raw: "drop_calls", desc: "Number of dropped/failed calls", target: "Fact_Cell_Performance", type: "INT" },
+            { raw: "drop_rate", desc: "Dropped call percentage (drop_calls / total_calls)", target: "Fact_Cell_Performance", type: "DECIMAL" },
+            { raw: "avg_load", desc: "Average network load/pressure", target: "Fact_Cell_Performance", type: "DECIMAL" },
+            { raw: "signal_stre", desc: "Signal strength (measured in dBm)", target: "Fact_Cell_Performance", type: "INT" },
+            { raw: "speed", desc: "Internet/Data speed rate", target: "Fact_Cell_Performance", type: "DECIMAL" },
+            { raw: "latency", desc: "Network response delay (milliseconds)", target: "Fact_Cell_Performance", type: "INT" },
+            { raw: "QoE", desc: "Quality of Experience score (0-10)", target: "Fact_Cell_Performance", type: "DECIMAL" },
+            { raw: "labor_cost", desc: "Cost of engineer/labor resources", target: "Fact_Cell_Performance", type: "DECIMAL" },
+            { raw: "parts_cost", desc: "Cost of replacement parts", target: "Fact_Cell_Performance", type: "DECIMAL" },
+            { raw: "downtime_hours", desc: "Hours tower was out of service", target: "Fact_Cell_Performance", type: "DECIMAL" }
+        ];
+
+        function populateDictionary() {
+            const body = document.getElementById('dictionary-body');
+            body.innerHTML = '';
+            dictionaryData.forEach(item => {
+                const isFact = item.target.includes('Fact');
+                const row = `
+                    <tr>
+                        <td><strong>${item.raw}</strong></td>
+                        <td>${item.desc}</td>
+                        <td><span class="target-tag ${isFact ? 'fact' : 'dim'}">${item.target}</span></td>
+                        <td>${item.type}</td>
+                    </tr>
+                `;
+                body.innerHTML += row;
+            });
+        }
+
+        // --- Search Functionality ---
+        function searchTable() {
+            const input = document.getElementById('dictionary-search');
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById('dictionary-table');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                let showRow = false;
+                const tds = tr[i].getElementsByTagName('td');
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j]) {
+                        const txtValue = tds[j].textContent || tds[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            showRow = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = showRow ? "" : "none";
+            }
+        }
+
+        // Initialize dictionary on load
+        populateDictionary();
+    </script>
+</body>
+</html>
