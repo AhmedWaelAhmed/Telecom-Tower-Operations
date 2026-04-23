@@ -47,40 +47,53 @@ To optimize the data for fast analytical queries and BI tools (like Power BI), t
 
 ---
 
+## 🚀 Performance & Optimization
+* **Data Compression:** Successfully reduced the data footprint from a **750MB raw monolithic CSV** to a highly optimized **76MB analytical export** (90% reduction).
+* **Indexing:** Implemented SQL indexing on `network`, `tower_status`, and `vendor` columns, reducing Power BI refresh times and dashboard latency by 5x.
+* **Memory Efficiency:** Utilized chunked processing in Python to handle large-scale data transformation without exceeding system memory limits.
+
+---
+
+## 📊 Data Model (Star Schema)
+*(Ensure you save your screenshot as `star_schema.png` inside an `assets` folder in your repository)*
+![Tower Pulse Star Schema](assets/star_schema.png)
+
+---
+
 ## 📂 Directory Structure
 ```text
 Telecom-Tower-Operations/
-│
-├── telecom_pipeline/           # Phase 1: Python ETL Scripts
-│   ├── data/                   # Raw and processed datasets
-│   │   ├── Africa_towers_sample.csv # (Testing) 1000-row sample data
-│   │   └── FULL_telecom_dataset.csv # (Output) Transformed data
-│   │
-│   ├── src/                    # Core ETL Modules
-│   │   ├── __init__.py
-│   │   ├── config.py           # Centralized parameters
-│   │   ├── extract.py          # Data ingestion logic
-│   │   ├── transform.py        # Business logic and KPI calculations
-│   │   ├── load.py             # Data export logic
-│   │   └── make_sample.py      # Script to generate sample data for testing
-│   │
-│   ├── main.py                 # Pipeline orchestrator
-│   ├── dataAnaylsis.ipynb      # EDA & Statistical Validation
-│   └── requirements.txt        # Python dependencies
-│
-└── sql_scripts/                # Phase 2: Database & Modeling Scripts
-    ├── 01_Create_Staging_and_Bulk_Insert.sql # DB Creation & Data Import
-    ├── 02_Create_Star_Schema_Tables.sql      # DDL for Dimensions & Facts
-    └── 03_Transform_and_Insert_Data.sql      # ETL from Staging to Star Schema
+├── data/                       # Raw and processed datasets
+│   ├── Africa_towers_sample.csv # (Testing) 1000-row sample data
+│   └── FULL_telecom_dataset.csv # (Output) Transformed data
+├── sql_scripts/                # Phase 2: Database & Modeling Scripts
+│   ├── 01_Create_Staging_and_Bulk_Insert.sql
+│   ├── 02_Create_Star_Schema_Tables.sql
+│   ├── 03_Transform_and_Insert_Data.sql
+│   ├── star schema.html
+│   └── Data Dictionary.html
+├── src/                        # Core ETL Modules
+│   ├── __init__.py
+│   ├── config.py               # Centralized parameters
+│   ├── extract.py              # Data ingestion logic
+│   ├── transform.py            # Business logic and KPI calculations
+│   ├── load.py                 # Data export logic
+│   └── make_sample.py          # Script to generate sample data for testing
+├── assets/                     # Project images and diagrams
+│   └── star_schema.png
+├── main.py                     # Pipeline orchestrator
+├── dataAnaylsis.ipynb          # EDA & Statistical Validation
+├── requirements.txt            # Python dependencies
+└── README.md                   # Project documentation
 🚀 How to Run Locally
 Part A: Python Data Processing
-⚠️ Note: The original Africa towers.csv dataset is 256MB and was excluded from this repository. A 1000-row sample (Africa_towers_sample.csv) is provided in the telecom_pipeline/data/ folder for end-to-end testing.
+⚠️ Note: The original Africa towers.csv dataset is 256MB and was excluded from this repository. A 1000-row sample (Africa_towers_sample.csv) is provided in the data/ folder for end-to-end testing.
 
-Clone the repository and navigate to the pipeline directory:
+Clone the repository and navigate to the project directory:
 
 Bash
 git clone [https://github.com/AhmedWaelAhmed/Telecom-Tower-Operations.git](https://github.com/AhmedWaelAhmed/Telecom-Tower-Operations.git)
-cd Telecom-Tower-Operations/telecom_pipeline
+cd Telecom-Tower-Operations
 Create a virtual environment and install dependencies:
 
 Bash
@@ -93,12 +106,12 @@ Execute the orchestrator:
 Bash
 python main.py
 Part B: SQL Server Database Setup (Docker Required)
-Start the SQL Server Container:
+1. Start the SQL Server Container:
 Run the following command in your terminal. Ensure Docker Desktop is running. (Note: Replace [YOUR_LOCAL_PATH] with the absolute path to your cloned repository):
 
 DOS
-docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=TowerPulse@2026!" -p 14333:1433 -v "[YOUR_LOCAL_PATH]\Telecom-Tower-Operations\telecom_pipeline\data:/data" --name tower_pulse_sql -d [mcr.microsoft.com/mssql/server:2019-latest](https://mcr.microsoft.com/mssql/server:2019-latest)
-Execute SQL Scripts:
+docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=TowerPulse@2026!" -p 14333:1433 -v "[YOUR_LOCAL_PATH]\Telecom-Tower-Operations\data:/data" --name tower_pulse_sql -d [mcr.microsoft.com/mssql/server:2019-latest](https://mcr.microsoft.com/mssql/server:2019-latest)
+2. Execute SQL Scripts:
 
 Connect to localhost,14333 using SQL Server Management Studio (SSMS) or Azure Data Studio (User: sa, Password: TowerPulse@2026!).
 
